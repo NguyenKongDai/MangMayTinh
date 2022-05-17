@@ -1,42 +1,68 @@
-# from tkinter import *
+#Python Program to search string in text using Tkinter
 
-# window = Tk()
-# window.title("Welcome to VniTeach app")
-# window.geometry('350x200')
-# #lbl = Label(window, text="Hello")
-# #lbl.grid(column=0, row=0)
+from tkinter import *
 
-# #Thêm một nút nhấn Click Me
-# btn = Button(window, text="Click Me", bg="orange", fg="red")
+#to create a window
+root = Tk()
 
-# #Thiết lập vị trí của nút nhấn có màu nền và màu chữ
-# btn.grid(column=1, row=0)
+#root window is the parent window
+fram = Frame(root)
 
-# window.mainloop()
+#adding label to search box
+Label(fram,text='Text to find:').pack(side=LEFT)
+
+#adding of single line text box
+edit = Entry(fram)
+
+#positioning of text box
+edit.pack(side=LEFT, fill=BOTH, expand=1)
+
+#setting focus
+edit.focus_set()
+
+#adding of search button
+butt = Button(fram, text='Find')
+butt.pack(side=RIGHT)
+fram.pack(side=TOP)
+
+#text box in root window
+text = Text(root)
+
+#text input area at index 1 in text window
+text.insert('1.0','''Type your text here''')
+text.pack(side=BOTTOM)
 
 
-import mysql.connector
+#function to search string in text
+def find():
+	
+	#remove tag 'found' from index 1 to END
+	text.tag_remove('found', '1.0', END)
+	
+	#returns to widget currently in focus
+	s = edit.get()
+	if s:
+		idx = '1.0'
+		while 1:
+			#searches for desired string from index 1
+			idx = text.search(s, idx, nocase=1,
+							stopindex=END)
+			if not idx: break
+			
+			#last index sum of current index and
+			#length of text
+			lastidx = '%s+%dc' % (idx, len(s))
+			
+			#overwrite 'Found' at idx
+			text.tag_add('found', idx, lastidx)
+			idx = lastidx
+		
+		#mark located string as red
+		text.tag_config('found', foreground='red')
+	edit.focus_set()
+butt.config(command=find)
 
-#establishing the connection
-conn = mysql.connector.connect(
-   user='root', password='password', host='127.0.0.1', database='mydb'
-)
-
-#Creating a cursor object using the cursor() method
-cursor = conn.cursor()
-
-#Dropping EMPLOYEE table if already exists.
-cursor.execute("DROP TABLE IF EXISTS EMPLOYEE")
-
-#Creating table as per requirement
-sql ='''CREATE TABLE EMPLOYEE(
-   FIRST_NAME CHAR(20) NOT NULL,
-   LAST_NAME CHAR(20),
-   AGE INT,
-   SEX CHAR(1),
-   INCOME FLOAT
-)'''
-cursor.execute(sql)
-
-#Closing the connection
-conn.close()
+#mainloop function calls the endless loop of the window,
+#so the window will wait for any
+#user interaction till we close it
+root.mainloop()

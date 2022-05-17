@@ -5,6 +5,7 @@ from tkinter.ttk import *
 from tkinter import ttk
 import tkinter.ttk as exTk
 import tkinter as tk
+from tkinter import messagebox
 
 HOST = '10.0.29.36'  # The server's hostname or IP address
 PORT = 12345        # The port used by the server
@@ -15,8 +16,8 @@ print('connecting to %s port ' + str(server_address))
 s.connect(server_address)
 
 def seeAllMembers():
-    msg = "op1"
-    s.sendall(bytes(msg, "utf8"))
+    #msg = "showAllMembers"
+    s.sendall(str("showAllMembers").encode('utf8'))
 
     member = []
     members = []
@@ -37,13 +38,45 @@ def seeAllMembers():
     for i in range(0, n):
         print(members[i])
 
+def search():
+    id = searchEntry.get()
+    #msg = "searchID"
+    s.sendall(str("search").encode('utf8'))
+    print(id)
+    #msg = id
+    s.sendall(str(id).encode('utf8'))
+
+    while True:
+        data = s.recv(1024).decode('utf8')
+        if data == "False":
+            print("Don't find member")
+            break
+        if data == "end":   
+            break
+        # member : [id, name, phone, email, small img, big img]
+        member = []
+        for i in range(0, 6):
+            data = s.recv(1024).decode('utf8')
+            member.append(data)
+    
+    print(member)
+
+
 root = tk.Tk()
-def showMenu():
-    root.title("Client")
-    root.geometry('250x150+300+300')
-    opt1 = Button(root, text = "Show All Members", command = seeAllMembers())
-    opt1.grid(column=1, row=0)
-    root.mainloop()
+#def showMenu():
+root.title("Client")
+root.geometry('500x300')
+
+searchEntry = Entry(root, width = 20)
+searchEntry.grid(column=1, row=0)
+searchEntry.focus()
+
+searchButton = Button(root, text = "Search by ID", command=lambda: search())
+searchButton.grid(column=2, row=0)
+
+showAllMembers = Button(root, text = "Show All Members", command = seeAllMembers)
+showAllMembers.grid(column=1, row=1)
+root.mainloop()
 
 
 
@@ -63,5 +96,3 @@ def showMenu():
 #     print('closing socket')
 #     s.close()
 
-
-showMenu()

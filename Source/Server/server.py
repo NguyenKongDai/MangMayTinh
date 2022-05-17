@@ -27,13 +27,13 @@ def readJsonFile(path):
     return data
 
 def showAllMember(data):
-    inforAllMember = []
+    inforAllMembers = []
     for i in data.keys():
-        inforAllMember.append((i, data[i]["fullname"]))
-    return inforAllMember
-
-def sendInforAllMember(inforAllMember):
-    for member in inforAllMember:
+        inforAllMembers.append((i, data[i]["fullname"]))
+    return inforAllMembers
+          
+def sendInforAllMembers(inforAllMembers):
+    for member in inforAllMembers:
         conn.sendall(str("begin").encode('utf8'))
         # member : [id, name]
         for data in member:
@@ -41,18 +41,41 @@ def sendInforAllMember(inforAllMember):
     
     conn.sendall(str("end").encode('utf8'))
 
-#def sendMsg(data):
+def search(data, id):
+    inforDetail = []
+    for key in data:
+        if key == id:
+            inforDetail.append(id)
+            inforDetail.append(data[key]['fullname'])
+            inforDetail.append(data[key]['phone'])
+            inforDetail.append(data[key]['email'])
+            inforDetail.append(data[key]['imageDir_small'])
+            inforDetail.append(data[key]['imageDir_big'])
+            return inforDetail
+    return("False")
 
-    
+def sendInforDetailMember(inforDetailMember):
+    if inforDetailMember == "False":
+        conn.sendall(str("False").encode('utf8'))
+    else:
+        conn.sendall(str("begin").encode('utf8'))
+        for data in inforDetailMember:
+            conn.sendall(str(data).encode('utf8'))
+        conn.sendall(str("end").encode('utf8'))
 
 def readMsg(str_data, data):
     if str_data == "quit":
         exit
-    if str_data == "op1":
-        print("op1")
-        inforAllMember = showAllMember(data)
+    if str_data == "showAllMembers":
+        print("showAllMembers")
+        inforAllMembers = showAllMember(data)
+        sendInforAllMembers(inforAllMembers)
+    if str_data == "search":
+        print("search")
+        id = conn.recv(1024).decode('utf8')
+        inforDetail = search(data, id)
+        sendInforDetailMember(inforDetail)
 
-    sendInforAllMember(inforAllMember)
     #sendMsg(inforAllMember)
     
     
@@ -64,22 +87,6 @@ def runServer(data):
             while True:
                 data1 = conn.recv(1024)
                 str_data = data1.decode("utf8")
-                # if str_data == "quit":
-                #     break
-                # """if not data:
-                #     break
-                # """
-                # if str_data == "op1":
-                #     data = readJsonFile(MEMBER_PATH)
-                #     for i in data.keys():
-                #         msg = i + data[i]['phone']
-                #         conn.sendall(bytes(msg, "utf8"))
-                
-                # print("Client: " + str_data)
-
-                # # Server send input
-                # msg = input("Server: ")
-                # conn.sendall(bytes(msg, "utf8"))
                 readMsg(str_data, data)
 
         finally:
