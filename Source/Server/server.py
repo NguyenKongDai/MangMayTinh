@@ -1,3 +1,5 @@
+from base64 import decode
+from ctypes import sizeof
 import tkinter as tk 
 from tkinter import messagebox
 from tkinter import ttk
@@ -7,6 +9,7 @@ from tkinter.ttk import *
 import socket
 import numpy as np
 import json
+import sys
 
 HOST = '10.0.29.36'  # Standard loopback interface address (localhost)
 PORT = 12345        # Port to listen on (non-privileged ports are > 1023)
@@ -24,23 +27,56 @@ def readJsonFile(path):
     return data
 
 def showAllMember(data):
-    #n = len(data.keys())
-    #print(n)
-    infor_all_member = []
+    inforAllMember = []
     for i in data.keys():
-        infor_all_member.append(i, data[i]["fullname"])
-    n = len(infor_all_member)
-    for i in range(0, n):
-        print(infor_all_member[i])
+        inforAllMember.append((i, data[i]["fullname"]))
+    return inforAllMember
 
-data = readJsonFile(MEMBER_PATH)
-showAllMember(data)
+def sendMsg(data):
+    #conn.sendall(bytes(data, "utf8"))
+    conn.sendall(bytes(data), decode='utf8')
 
 def readMsg(str_data, data):
     if str_data == "quit":
         exit
     if str_data == "op1":
-        showAllMember(data)
+        inforAllMember = showAllMember(data)
+    
+    sendMsg(inforAllMember)
+    
+    
+def runServer(data):
+    while True:
+        # conn, addr = s.accept()
+        try:
+            print('Connected by', addr)
+            while True:
+                data1 = conn.recv(1024)
+                str_data = data1.decode("utf8")
+                # if str_data == "quit":
+                #     break
+                # """if not data:
+                #     break
+                # """
+                # if str_data == "op1":
+                #     data = readJsonFile(MEMBER_PATH)
+                #     for i in data.keys():
+                #         msg = i + data[i]['phone']
+                #         conn.sendall(bytes(msg, "utf8"))
+                
+                # print("Client: " + str_data)
+
+                # # Server send input
+                # msg = input("Server: ")
+                # conn.sendall(bytes(msg, "utf8"))
+                readMsg(str_data, data)
+
+        finally:
+            # Clean up the connection
+            conn.close()
+            # if count == 2: 
+            #     break
+        s.close() 
 
 
 
@@ -76,5 +112,7 @@ def readMsg(str_data, data):
 #             #     break
 #         s.close() 
 
+
+conn, addr = s.accept()
 data = readJsonFile(MEMBER_PATH)
-showAllMember(data)
+runServer(data)

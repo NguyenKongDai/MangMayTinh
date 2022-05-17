@@ -6,7 +6,7 @@ from tkinter import ttk
 import tkinter.ttk as exTk
 import tkinter as tk
 
-HOST = '192.168.10.73'  # The server's hostname or IP address
+HOST = '10.0.29.36'  # The server's hostname or IP address
 PORT = 12345        # The port used by the server
 # Create a TCP/IP socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,7 +17,6 @@ s.connect(server_address)
 def seeAllMembers():
     msg = "op1"
     s.sendall(bytes(msg, "utf8"))
-    print('1')
 
 root = tk.Tk()
 def showMenu():
