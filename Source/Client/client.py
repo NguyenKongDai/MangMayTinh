@@ -18,6 +18,25 @@ def seeAllMembers():
     msg = "op1"
     s.sendall(bytes(msg, "utf8"))
 
+    member = []
+    members = []
+    while True:
+        data = s.recv(1024).decode('utf8')
+        #print(data)
+        if data == "end":
+            break
+        # member : [id, name]
+        for i in range(0, 2):
+            data = s.recv(1024).decode('utf8')
+            member.append(data)
+
+        members.append(member)
+        member = []
+
+    n = len(members)
+    for i in range(0, n):
+        print(members[i])
+
 root = tk.Tk()
 def showMenu():
     root.title("Client")

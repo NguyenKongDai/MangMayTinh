@@ -32,17 +32,28 @@ def showAllMember(data):
         inforAllMember.append((i, data[i]["fullname"]))
     return inforAllMember
 
-def sendMsg(data):
-    #conn.sendall(bytes(data, "utf8"))
-    conn.sendall(bytes(data), decode='utf8')
+def sendInforAllMember(inforAllMember):
+    for member in inforAllMember:
+        conn.sendall(str("begin").encode('utf8'))
+        # member : [id, name]
+        for data in member:
+            conn.sendall(str(data).encode('utf8'))
+    
+    conn.sendall(str("end").encode('utf8'))
+
+#def sendMsg(data):
+
+    
 
 def readMsg(str_data, data):
     if str_data == "quit":
         exit
     if str_data == "op1":
+        print("op1")
         inforAllMember = showAllMember(data)
-    
-    sendMsg(inforAllMember)
+
+    sendInforAllMember(inforAllMember)
+    #sendMsg(inforAllMember)
     
     
 def runServer(data):
