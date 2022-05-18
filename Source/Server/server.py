@@ -9,9 +9,10 @@ from tkinter.ttk import *
 import socket
 import numpy as np
 import json
-import sys
+import os
 
-HOST = '10.0.29.36'  # Standard loopback interface address (localhost)
+
+HOST = '172.20.127.238'  # Standard loopback interface address (localhost)
 PORT = 12345        # Port to listen on (non-privileged ports are > 1023)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,19 +27,30 @@ def readJsonFile(path):
         data = json.load(json_file)
     return data
 
+
 def showAllMember(data):
     inforAllMembers = []
     for i in data.keys():
-        inforAllMembers.append((i, data[i]["fullname"]))
+
+        with open(data[i]["imageDir_small"], "rb") as f:
+            image = f.read()
+            size = len(image)
+            f.close()
+
+        inforAllMembers.append((i, data[i]["fullname"], str(size), image))
     return inforAllMembers
           
 def sendInforAllMembers(inforAllMembers):
     for member in inforAllMembers:
         conn.sendall(str("begin").encode('utf8'))
-        # member : [id, name]
-        for data in member:
-            conn.sendall(str(data).encode('utf8'))
-    
+
+        conn.sendall(str(member[0]).encode('utf8'))
+        conn.sendall(str(member[1]).encode('utf8'))
+        conn.sendall(str(member[2]).encode('utf8'))
+        conn.sendall(member[3])
+
+        conn.recv(1024)
+
     conn.sendall(str("end").encode('utf8'))
 
 def search(data, id):
@@ -75,8 +87,6 @@ def readMsg(str_data, data):
         id = conn.recv(1024).decode('utf8')
         inforDetail = search(data, id)
         sendInforDetailMember(inforDetail)
-
-    #sendMsg(inforAllMember)
     
     
 def runServer(data):
@@ -129,6 +139,8 @@ def runServer(data):
 #             # if count == 2: 
 #             #     break
 #         s.close() 
+
+
 
 
 conn, addr = s.accept()

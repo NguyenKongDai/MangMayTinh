@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import messagebox
 from turtle import width
 
-HOST = '10.0.29.36'  # The server's hostname or IP address
+HOST = '172.20.127.238'  # The server's hostname or IP address
 PORT = 12345        # The port used by the server
 # Create a TCP/IP socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,11 +25,22 @@ def seeAllMembers():
         data = s.recv(1024).decode('utf8')
         if data == "end":
             break
-        # member : [id, name]
+        # member : [id, name, Small Img]
+
         for i in range(0, 2):
             data = s.recv(1024).decode('utf8')
             member.append(data)
+        
+        size = int(s.recv(1024).decode('utf8'))
+        data = s.recv(round((size/1024) + 0.5)*1024)
+        str_path = "Image" + member[0] + ".jpg"
+        f = open(str_path, 'wb')
+        f.write(data)
+        f.close()
 
+        s.sendall(str("Huy").encode('utf8'))
+
+        
         members.append(member)
         member = []
     return(members)
@@ -53,11 +64,19 @@ def search():
             member.append(data)
     return(member)
 
-def showAllMembers():
+def clearFrameShow():
+    for widget in show_frame.winfo_children():
+        widget.destroy()
 
-    tree = ttk.Treeview(show_frame, column = ( 'ID', 'Name'), show='headings',height=15)
-    # tree.heading('Small Img', text = 'Avatar')
-    # tree.column('Small Img', width=100)
+def showAllMembers():
+    clearFrameShow()
+    # set height row
+    s = ttk.Style()
+    s.configure('Treeview', rowheight=40)
+
+    tree = ttk.Treeview(show_frame, column = ('Small Img', 'ID', 'Name'), show='headings',height=15)
+    tree.heading('Small Img', text = 'Avatar')
+    tree.column('Small Img', width=100)
     tree.heading('ID', text = 'ID')
     tree.column('ID', width=50)
     tree.heading('Name', text = 'Full Name')
@@ -78,9 +97,8 @@ def showAllMembers():
     show_frame.tkraise()
 
 def showMember():
+    clearFrameShow()
     tree = ttk.Treeview(show_frame, column = ( 'ID', 'Name', 'Phone', 'Email', 'Avatar', 'Cover'), show='headings',height=5)
-    # tree.heading('Small Img', text = 'Avatar')
-    # tree.column('Small Img', width=100)
     tree.heading('ID', text = 'ID')
     tree.column('ID', width=50)
     tree.heading('Name', text = 'Full Name')
@@ -93,6 +111,7 @@ def showMember():
     member = search()
     if member == "False":
         fail = tk.Label(show_frame, text="Can't find member")
+        fail.pack()
     else:
         for n in range(0, 1):
             contacts.append(member)
@@ -101,7 +120,7 @@ def showMember():
 
         tree.grid(row=0, column=0)
 
-    show_frame.tkraise()
+    #show_frame.tkraise()
 
 
 
@@ -128,16 +147,6 @@ show_frame.pack()
 
 main_frame.tkraise()
 #show_frame.tkraise()
-
-# searchEntry = tk.Entry(window)
-# searchButton = tk.Button(window, text = "Search by ID")
-
-# showAllMembers = tk.Button(window, text = "Show All Members")
-
-# searchEntry.pack()
-# searchButton.pack()
-# showAllMembers.pack()
-
 window.mainloop()
 
 # try:
