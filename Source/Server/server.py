@@ -97,6 +97,8 @@ def sendInforDetailMember(inforDetailMember, conn):
         conn.sendall(str(inforDetailMember[6]).encode('utf8'))      # size Big Img
         conn.sendall(inforDetailMember[7])                          # Big Img
         conn.recv(1024)
+        conn.sendall(str("end").encode('utf8'))
+    
 def readMsg(str_data, data, conn):
     if str_data == "quit":
         exit

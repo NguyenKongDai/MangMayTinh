@@ -60,7 +60,7 @@ def search():
             return("False")
         if data == "end":   
             break
-            # member : [id, name, phone, email, size, small img, size, big img]
+        # member : [id, name, phone, email, size, small img, size, big img]
         for i in range(0, 4):
             data = s.recv(1024).decode('utf8')
             member.append(data)
