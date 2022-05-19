@@ -7,8 +7,11 @@ import tkinter.ttk as exTk
 import tkinter as tk
 from tkinter import messagebox
 from turtle import width
+import PIL
+from PIL import Image, ImageTk
+from matplotlib import image
 
-HOST = '172.20.127.238'  # The server's hostname or IP address
+HOST = '172.20.178.31'  # The server's hostname or IP address
 PORT = 12345        # The port used by the server
 # Create a TCP/IP socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,12 +36,12 @@ def seeAllMembers():
         
         size = int(s.recv(1024).decode('utf8'))
         data = s.recv(round((size/1024) + 0.5)*1024)
-        str_path = "Image" + member[0] + ".jpg"
+        str_path = "Image/ImageSmall" + member[0] + ".jpg"
         f = open(str_path, 'wb')
         f.write(data)
         f.close()
 
-        s.sendall(str("Huy").encode('utf8'))
+        s.sendall(str("Done").encode('utf8'))
 
         
         members.append(member)
@@ -49,19 +52,39 @@ def search():
     id = searchEntry.get()
     s.sendall(str("search").encode('utf8'))
     s.sendall(str(id).encode('utf8'))
-
+    member = []
     while True:
         data = s.recv(1024).decode('utf8')
         if data == "False":
+            s.sendall(str(data).encode('utf8'))
             return("False")
-            break
         if data == "end":   
             break
-        # member : [id, name, phone, email, small img, big img]
-        member = []
-        for i in range(0, 6):
+            # member : [id, name, phone, email, size, small img, size, big img]
+        for i in range(0, 4):
             data = s.recv(1024).decode('utf8')
             member.append(data)
+        
+        sizeSmall = int(s.recv(1024).decode('utf8'))
+        dataSmall = s.recv(round((sizeSmall/1024) + 0.5)*1024) 
+
+        str_path = "Image/ImageSmall" + member[0] + ".jpg"
+        f = open(str_path, 'wb')
+        f.write(dataSmall)
+        f.close()
+
+        s.sendall(str("Done 1").encode('utf8'))
+
+        sizeBig = int(s.recv(1024).decode('utf8'))
+        dataBig = s.recv(round((sizeBig/1024) + 0.5)*1024) 
+
+        str_path = "Image/ImageBig" + member[0] + ".jpg"
+        f = open(str_path, 'wb')
+        f.write(dataBig)
+        f.close()
+        
+        s.sendall(str("Done 2").encode('utf8'))
+
     return(member)
 
 def clearFrameShow():
@@ -71,23 +94,36 @@ def clearFrameShow():
 def showAllMembers():
     clearFrameShow()
     # set height row
+
     s = ttk.Style()
-    s.configure('Treeview', rowheight=40)
+    s.configure('Treeview', rowheight=60)
 
-    tree = ttk.Treeview(show_frame, column = ('Small Img', 'ID', 'Name'), show='headings',height=15)
-    tree.heading('Small Img', text = 'Avatar')
-    tree.column('Small Img', width=100)
-    tree.heading('ID', text = 'ID')
-    tree.column('ID', width=50)
-    tree.heading('Name', text = 'Full Name')
+    tree = ttk.Treeview(show_frame, column = ('ID', 'Name'), selectmode='none', height=5)
+    tree.grid(row=0, column=0, sticky='nsew')
 
-    contacts = []
+    tree.heading('#0', text = 'Avatar', anchor='center')
+    tree.heading('#1', text = 'ID', anchor='center')
+    tree.heading('#2', text = 'Full Name', anchor='center')
+
+    tree.column('#0', anchor='center', width=100)
+    tree.column('ID', anchor='center', width=100)
+    tree.column('Name', anchor='center', width=200)
+
     members = seeAllMembers()
     n = len(members)
+    images = []
+
     for i in range(0, n):
-        contacts.append(members[i])
-    for contact in contacts:
-        tree.insert('', tk.END, values=contact)
+        path = 'Image/ImageSmall' + members[i][0] + '.jpg'
+        img = Image.open(path) #change to your file path
+        resized = img.resize((50, 50), Image.ANTIALIAS)
+        imgTk = ImageTk.PhotoImage(resized)
+        images.append(imgTk)
+
+    for i in range(0, n):
+        tree.insert('', 'end', image = images[i],
+                            value=(members[i][0], members[i][1]))
+        tree.image = images
 
     scrollbar = ttk.Scrollbar(show_frame, orient=tk.VERTICAL, command=tree.yview)
     tree.configure(yscroll=scrollbar.set)
@@ -97,39 +133,58 @@ def showAllMembers():
     show_frame.tkraise()
 
 def showMember():
-    clearFrameShow()
-    tree = ttk.Treeview(show_frame, column = ( 'ID', 'Name', 'Phone', 'Email', 'Avatar', 'Cover'), show='headings',height=5)
-    tree.heading('ID', text = 'ID')
-    tree.column('ID', width=50)
-    tree.heading('Name', text = 'Full Name')
-    tree.heading('Phone', text = 'Phone')
-    tree.heading('Email', text = 'Email')
-    tree.heading('Avatar', text = 'Avatar')
-    tree.heading('Cover', text = 'Cover')
-
-    contacts = []
     member = search()
+    clearFrameShow()
     if member == "False":
         fail = tk.Label(show_frame, text="Can't find member")
-        fail.pack()
+        fail.grid(row=0, column=0)
     else:
-        for n in range(0, 1):
-            contacts.append(member)
-        for contact in contacts:
-            tree.insert('', tk.END, values=contact)
+        s = ttk.Style()
+        s.configure('Treeview', rowheight=60)
 
-        tree.grid(row=0, column=0)
+        tree = ttk.Treeview(show_frame, column = ( 'ID', 'Name', 'Phone', 'Email'), selectmode = 'none',height = 1)
+        tree.grid(row=0, column=0, sticky='nsew')
 
-    #show_frame.tkraise()
+        tree.heading('#0', text = 'Avatar', anchor='center')
+        tree.heading('#1', text = 'ID', anchor='center')
+        tree.heading('#2', text = 'Full Name', anchor='center')
+        tree.heading('#3', text = 'Phone', anchor='center')
+        tree.heading('#4', text = 'Email', anchor='center')
+        
+        tree.column('#0', anchor='center', width=100)
+        tree.column('ID', anchor='center', width=50)
+        tree.column('Name', anchor='center', width=150)
+        tree.column('Phone', anchor='center', width=100)
+        tree.column('Email', anchor='center', width=150)
 
+        pathSmall = 'Image/ImageSmall' + member[0] + '.jpg'
+        imgSmall = Image.open(pathSmall) #change to your file path
+        resizedSmall = imgSmall.resize((50, 50), Image.ANTIALIAS)
+        imgTkSmall = ImageTk.PhotoImage(resizedSmall)
 
+        pathBig = 'Image/ImageBig' + member[0] + '.jpg'
+        imgBig = Image.open(pathBig) 
+        resizedBig = imgBig.resize((200, 150), Image.ANTIALIAS)
+        imgTkBig = ImageTk.PhotoImage(resizedBig)
+        
+        bigImgLabel = tk.Label(show_frame, image = imgTkBig)
+        bigImgLabel.image = imgTkBig
+        bigImgLabel.grid(row=0, column=0)
 
+        tree.insert('', 'end', image = imgTkSmall,
+                            value=(member[0], member[1], member[2], member[3]))
+        tree.image = imgTkSmall
+
+        
+        tree.grid(row=1, column=0)
+        
+    show_frame.tkraise()
 
 window = tk.Tk()
 
 window.title('Client')
-window.geometry('500x500')
-window.resizable(width=False, height=True)
+window.geometry('800x500')
+window.resizable(width=True, height=True)
 
 main_frame = tk.Frame(master=window, height=200)
 show_frame = tk.Frame(master=window, height=500)
