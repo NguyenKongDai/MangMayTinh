@@ -180,6 +180,11 @@ def showMember():
         
     show_frame.tkraise()
 
+def closeConnect():
+    s.sendall(str("exit").encode('utf8'))
+    #s.recv(1024)
+    window.destroy()
+
 window = tk.Tk()
 
 window.title('Client')
@@ -192,10 +197,12 @@ show_frame = tk.Frame(master=window, height=500)
 searchEntry = tk.Entry(main_frame, width = 20)
 searchButton = tk.Button(main_frame, text = "Search by ID", command = showMember)
 showAllMembers = tk.Button(main_frame, text = "Show All Members", command = showAllMembers)
+exitButton = tk.Button(main_frame, text = "Exit", command = closeConnect)
 
 searchEntry.pack(pady=(10,0)) 
 searchButton.pack(pady=(3,5))
 showAllMembers.pack(pady = 10)
+exitButton.pack(pady = 10)
 
 main_frame.pack()
 show_frame.pack()

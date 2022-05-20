@@ -13,18 +13,25 @@ import os
 import threading
 from _thread import *
 
-HOST = '172.20.178.31'  # Standard loopback interface address (localhost)
-PORT = 12345        # Port to listen on (non-privileged ports are > 1023)
-# count = 0
+window = tk.Tk()
+
+HOST = '172.20.178.31'  # host để client kết nối
+PORT = 12345        # port để client kết nối
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST, PORT))
+s.listen(5)
 
 MEMBER_PATH = 'member.json'
+LIVE_CLIENT = []
 
+# Đọc dữ liệu từ file json
 def readJsonFile(path):
     with open(path, encoding='utf-8') as json_file:
         data = json.load(json_file)
     return data
 
-
+# Lấy thông tin rút gọn của các member
 def showAllMember(data):
     inforAllMembers = []
     for i in data.keys():
@@ -36,7 +43,8 @@ def showAllMember(data):
 
         inforAllMembers.append((i, data[i]["fullname"], str(size), image))
     return inforAllMembers
-          
+
+# Gửi dữ liệu của từng member qua client 
 def sendInforAllMembers(inforAllMembers, conn):
     for member in inforAllMembers:
         conn.sendall(str("begin").encode('utf8'))
@@ -50,6 +58,7 @@ def sendInforAllMembers(inforAllMembers, conn):
 
     conn.sendall(str("end").encode('utf8'))
 
+# Tìm kiếm thông tin member bằng ID
 def search(data, id):
     inforDetail = []
     for key in data:
@@ -78,11 +87,12 @@ def search(data, id):
             inforDetail.append(image)
 
             return inforDetail
-    return("False")
+    return("False") # Nếu không tìm thấy member
 
+# Gửi thông tin chi tiết của 1 member
 def sendInforDetailMember(inforDetailMember, conn):
     if inforDetailMember == "False":
-        conn.sendall(str("False").encode('utf8'))
+        conn.sendall(str("False").encode('utf8'))       # Nếu member đó không tồn tại
         conn.recv(1024)
     else:
         conn.sendall(str("begin").encode('utf8'))
@@ -98,10 +108,23 @@ def sendInforDetailMember(inforDetailMember, conn):
         conn.sendall(inforDetailMember[7])                          # Big Img
         conn.recv(1024)
         conn.sendall(str("end").encode('utf8'))
-    
-def readMsg(str_data, data, conn):
-    if str_data == "quit":
-        exit
+
+# Update các Client đang hoạt động
+def showLiveClient():
+    showListBox.delete(0, len(LIVE_CLIENT))
+    for i in range(len(LIVE_CLIENT)):
+        showListBox.insert(0, LIVE_CLIENT[i])
+
+# Nếu Client thoát
+def closeConnect(addr, conn):
+    for i in range(0, len(LIVE_CLIENT)):
+        if LIVE_CLIENT[i] == addr:
+            del LIVE_CLIENT[i]
+            break
+    showLiveClient()
+
+# Xử lí tin nhắn yêu cầu từ client
+def readMsg(str_data, data, addr, conn):
     if str_data == "showAllMembers":
         print("showAllMembers")
         inforAllMembers = showAllMember(data)
@@ -111,38 +134,82 @@ def readMsg(str_data, data, conn):
         id = conn.recv(1024).decode('utf8')
         inforDetail = search(data, id)
         sendInforDetailMember(inforDetail, conn)
-    
-    
-def runServer(conn, addr, data):
-    while True:
-        try:
-            print('Connected by', addr)
-            while True:
-                data1 = conn.recv(1024)
-                str_data = data1.decode("utf8")
-                readMsg(str_data, data, conn)
+    if str_data == "exit":
+        print("exit")
+        closeConnect(addr, conn)
 
-        finally:
-            # Clean up the connection
-            conn.close()
-            # if count == 2: 
-            #     break
-        
-def Main():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST, PORT))
-    s.listen(5)
+# kết nối và đọc tin nhắn từ Client
+def connect(conn, addr, data):
+    try:
+        print('Connected by', addr)
+        LIVE_CLIENT.append(addr)
+        showLiveClient()
+        while True:
+            data1 = conn.recv(1024)
+            str_data = data1.decode("utf8")
+            readMsg(str_data, data, addr, conn)
 
-    data = readJsonFile(MEMBER_PATH)
+    finally:
+        conn.close()
+
+# Chạy server
+def runServer():
     try:
         while True:
             conn, addr = s.accept()
-            start_new_thread(runServer, (conn, addr, data))  
-    except:
+            start_new_thread(connect, (conn, addr, data))  
+    except KeyboardInterrupt:
+        print("Error")
         s.close()
     finally:
+        print("end")
         s.close()
 
 
-if __name__ == '__main__':
-    Main()
+window.title('Server')
+window.geometry('800x500')
+window.resizable(width=True, height=True)
+
+data = readJsonFile(MEMBER_PATH)
+
+thread = threading.Thread(target = runServer)
+thread.deamon = True
+thread.start()
+
+showListBox = tk.Listbox(window, width=60,height=10, font=(20))
+exitButton = tk.Button(window, text = "Exit", command=window.destroy)
+insertButton = tk.Button(window, text = "Insert Member", )
+
+
+showListBox.pack()
+insertButton.pack(pady = 10)
+exitButton.pack(pady = 10)
+window.mainloop()
+
+# def Main():
+#     # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     # s.bind((HOST, PORT))
+#     # s.listen(5)
+#     data = readJsonFile(MEMBER_PATH)
+#     try:
+#         while True:
+#             conn, addr = s.accept()
+#             print(1)
+#             start_new_thread(runServer, (conn, addr, data, liveListBox))  
+#     except:
+#         s.close()
+#     finally:
+#         s.close()
+
+    
+
+
+# if __name__ == '__main__':
+#     window = tk.Tk()
+#     window.title('Server')
+#     window.geometry('800x500')
+#     window.resizable(width=True, height=True)
+#     liveListBox = Listbox(window,width=60,height=10)
+#     liveListBox.pack()
+#     Main()
+#     window.mainloop()
