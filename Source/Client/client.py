@@ -32,18 +32,20 @@ def seeAllMembers():
 
         for i in range(0, 2):
             data = s.recv(1024).decode('utf8')
+            s.sendall(str("done").encode('utf8'))
             member.append(data)
         
         size = int(s.recv(1024).decode('utf8'))
+        s.sendall(str("done").encode('utf8'))
+
         data = s.recv(round((size/1024) + 0.5)*1024)
+    
         str_path = "Image/ImageSmall" + member[0] + ".jpg"
         f = open(str_path, 'wb')
         f.write(data)
         f.close()
+        s.sendall(str("done").encode('utf8'))
 
-        s.sendall(str("Done").encode('utf8'))
-
-        
         members.append(member)
         member = []
     return(members)
@@ -63,27 +65,30 @@ def search():
         # member : [id, name, phone, email, size, small img, size, big img]
         for i in range(0, 4):
             data = s.recv(1024).decode('utf8')
+            s.sendall(str("done").encode('utf8'))
             member.append(data)
         
         sizeSmall = int(s.recv(1024).decode('utf8'))
+        s.sendall(str("done").encode('utf8'))
         dataSmall = s.recv(round((sizeSmall/1024) + 0.5)*1024) 
-
+        s.sendall(str("Done 1").encode('utf8'))
         str_path = "Image/ImageSmall" + member[0] + ".jpg"
         f = open(str_path, 'wb')
         f.write(dataSmall)
         f.close()
 
-        s.sendall(str("Done 1").encode('utf8'))
+        
 
         sizeBig = int(s.recv(1024).decode('utf8'))
+        s.sendall(str("done").encode('utf8'))
         dataBig = s.recv(round((sizeBig/1024) + 0.5)*1024) 
-
+        s.sendall(str("Done 2").encode('utf8'))
         str_path = "Image/ImageBig" + member[0] + ".jpg"
         f = open(str_path, 'wb')
         f.write(dataBig)
         f.close()
         
-        s.sendall(str("Done 2").encode('utf8'))
+        
 
     return(member)
 

@@ -3,8 +3,10 @@ from ctypes import sizeof
 import tkinter as tk 
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import filedialog
 from tkinter import *
 from tkinter.ttk import *
+from PIL import Image, ImageTk
 
 import socket
 import numpy as np
@@ -50,10 +52,12 @@ def sendInforAllMembers(inforAllMembers, conn):
         conn.sendall(str("begin").encode('utf8'))
 
         conn.sendall(str(member[0]).encode('utf8'))
+        conn.recv(1024)
         conn.sendall(str(member[1]).encode('utf8'))
+        conn.recv(1024)
         conn.sendall(str(member[2]).encode('utf8'))
+        conn.recv(1024)
         conn.sendall(member[3])
-
         conn.recv(1024)
 
     conn.sendall(str("end").encode('utf8'))
@@ -98,13 +102,19 @@ def sendInforDetailMember(inforDetailMember, conn):
         conn.sendall(str("begin").encode('utf8'))
 
         conn.sendall(str(inforDetailMember[0]).encode('utf8'))      # id
+        conn.recv(1024)
         conn.sendall(str(inforDetailMember[1]).encode('utf8'))      # fullname
+        conn.recv(1024)
         conn.sendall(str(inforDetailMember[2]).encode('utf8'))      # phone
+        conn.recv(1024)
         conn.sendall(str(inforDetailMember[3]).encode('utf8'))      # email
+        conn.recv(1024)
         conn.sendall(str(inforDetailMember[4]).encode('utf8'))      # size Small Img
+        conn.recv(1024)
         conn.sendall(inforDetailMember[5])                         # Small Img
         conn.recv(1024)                                         # done 1 img
         conn.sendall(str(inforDetailMember[6]).encode('utf8'))      # size Big Img
+        conn.recv(1024)
         conn.sendall(inforDetailMember[7])                          # Big Img
         conn.recv(1024)
         conn.sendall(str("end").encode('utf8'))
@@ -166,24 +176,137 @@ def runServer():
         s.close()
 
 
+def chooseSmall(smallImgInsertEntry):
+        ifile = filedialog.askopenfile(mode='rb', title='Choose a file')
+        pathSmall = ifile.name
+        smallImgInsertEntry = smallImgInsertEntry.insert(0, pathSmall)
+
+
+def chooseBig(bigImgInsertEntry):
+        ifile = filedialog.askopenfile(mode='rb', title='Choose a file')
+        pathBig = ifile.name
+        bigImgInsertEntry = bigImgInsertEntry.insert(0, pathBig)
+
+def checkID(id):
+    for key in data:
+        if id == key:
+            return("false")
+    return("true")
+
+def getInfor(idInsertEntry, fullnameInsertEntry, phoneInsertEntry, emailInsertEntry, smallImgInsertEntry, bigImgInsertEntry):
+    id = idInsertEntry.get()
+    if checkID(id) == "false":
+        messagebox.showinfo('Insert Member', 'ID already exists')
+        return
+
+    pathSmallImg = "Image/small" + id + ".jpg"
+    pathBigImg = "Image/big" + id + ".jpg"
+
+    with open(smallImgInsertEntry.get(), "rb") as f:
+        dataSmallImg = f.read()
+        f.close()
+
+    f = open(pathSmallImg, 'wb')
+    f.write(dataSmallImg)
+    f.close()
+
+    with open(bigImgInsertEntry.get(), "rb") as f:
+        dataBigImg = f.read()
+        f.close()
+
+    f = open(pathBigImg, 'wb')
+    f.write(dataBigImg)
+    f.close()
+
+    data[id] = {
+        "fullname": fullnameInsertEntry.get(),
+        "phone": phoneInsertEntry.get(),
+        "email": emailInsertEntry.get(),
+        "imageDir_small": pathSmallImg,
+        "imageDir_big": pathBigImg
+        } 
+
+    messagebox.showinfo('Insert Member', 'Success')
+
+def clearFuncFrame():
+    for widget in func_frame.winfo_children():
+        widget.destroy()
+
+def funcInsert():
+
+    clearFuncFrame()
+
+    idInsertLabel = tk.Label(func_frame, text = "ID: ")
+    idInsertLabel.grid(row=0, column=0)
+    idInsertEntry = tk.Entry(func_frame, width = 20)
+    idInsertEntry.grid(row=0, column=1)
+    
+    fullnameInsertLabel = tk.Label(func_frame, text = "Full name: ")
+    fullnameInsertLabel.grid(row=1, column=0)
+    fullnameInsertEntry = tk.Entry(func_frame, width = 20)
+    fullnameInsertEntry.grid(row=1, column=1)
+
+    phoneInsertLabel = tk.Label(func_frame, text = "Phone: ")
+    phoneInsertLabel.grid(row=2, column=0)
+    phoneInsertEntry = tk.Entry(func_frame, width = 20)
+    phoneInsertEntry.grid(row=2, column=1)
+
+    emailInsertLabel = tk.Label(func_frame, text = "Email: ")
+    emailInsertLabel.grid(row=3, column=0)
+    emailInsertEntry = tk.Entry(func_frame, width = 20)
+    emailInsertEntry.grid(row=3, column=1)
+
+    smallImgInsertLabel = tk.Label(func_frame, text = "Path Small Img: ")
+    smallImgInsertLabel.grid(row=4, column=0)
+    smallImgInsertEntry = tk.Entry(func_frame)
+    smallImgInsertEntry.grid(row=4, column=2)
+    smallImgInsertButton =  tk.Button(func_frame, text='Browse', command=lambda: chooseSmall(smallImgInsertEntry))
+    smallImgInsertButton.grid(row=4, column=1)
+
+    bigImgInsertLabel = tk.Label(func_frame, text = "Path Big Img: ")
+    bigImgInsertLabel.grid(row=5, column=0)
+    bigImgInsertEntry = tk.Entry(func_frame)
+    bigImgInsertEntry.grid(row=5, column=2)
+    bigImgInsertButton =  tk.Button(func_frame, text='Browse', command=lambda: chooseBig(bigImgInsertEntry))
+    bigImgInsertButton.grid(row=5, column=1)
+
+    doneButton = tk.Button(func_frame, text="Confirm", command=lambda: getInfor(idInsertEntry, 
+                                                                            fullnameInsertEntry, 
+                                                                            phoneInsertEntry, 
+                                                                            emailInsertEntry, 
+                                                                            smallImgInsertEntry,
+                                                                            bigImgInsertEntry))
+    doneButton.grid(row = 6, column= 0)
+
+def closeServer():
+    with open(MEMBER_PATH, 'w') as outfile:
+        json.dump(data, outfile)
+    window.destroy()
+
 window.title('Server')
 window.geometry('800x500')
 window.resizable(width=True, height=True)
 
 data = readJsonFile(MEMBER_PATH)
 
+main_frame = tk.Frame(master=window)
+main_frame.pack()
+func_frame = tk.Frame(master=window)
+func_frame.pack()
+
 thread = threading.Thread(target = runServer)
 thread.deamon = True
 thread.start()
 
-showListBox = tk.Listbox(window, width=60,height=10, font=(20))
-exitButton = tk.Button(window, text = "Exit", command=window.destroy)
-insertButton = tk.Button(window, text = "Insert Member", )
+showListBox = tk.Listbox(main_frame, width=60, height=10, font=(20))
+exitButton = tk.Button(main_frame, text = "Exit", command=closeServer)
+insertButton = tk.Button(main_frame, text = "Insert Member", command = funcInsert)
 
 
 showListBox.pack()
 insertButton.pack(pady = 10)
 exitButton.pack(pady = 10)
+main_frame.tkraise()
 window.mainloop()
 
 # def Main():

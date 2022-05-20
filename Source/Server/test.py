@@ -1,20 +1,14 @@
-# Python program to create a close button
-# using destroy Non-Class method
 from tkinter import *
-  
-# Creating the tkinter window
-root = Tk()
-root.geometry("200x100")
-  
-# Function for closing window
-  
-  
-def Close():
-    root.destroy()
-  
-  
-# Button for closing
-exit_button = Button(root, text="Exit", command=Close)
-exit_button.pack(pady=20)
-  
-root.mainloop()
+from tkinter import messagebox
+
+window = Tk()
+window.title("Welcome to VniTeach app")
+window.geometry('350x200')
+
+def clicked():
+    messagebox.showinfo('Message title', 'Message content')
+
+btn = Button(window,text='Click here', command=clicked)
+btn.grid(column=0,row=0)
+
+window.mainloop()

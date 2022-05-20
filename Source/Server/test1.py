@@ -1,22 +1,17 @@
-from tkinter import*
-root=Tk()
-sizex = 600
-sizey = 400
-posx  = 40
-posy  = 20
-root.wm_geometry("%dx%d+%d+%d" % (sizex, sizey, posx, posy))
-itemsforlistbox=['one','two','three','four','five','six','seven']
-
-def CurSelet(event):
-    widget = event.widget
-    selection=widget.curselection()
-    picked = widget.get(selection[1])
-    print(picked)
-
-mylistbox=Listbox(root,width=60,height=10,font=('times',13))
-mylistbox.bind('<<ListboxSelect>>',CurSelet)
-mylistbox.place(x=32,y=90)
-
-for items in itemsforlistbox:
-    mylistbox.insert(END,items)
-root.mainloop()
+import json
+filename = 'member.json'
+entry = {"005": {
+        "fullname": "Dũ Quốc Huy",
+        "phone": "0123456789",
+        "email": "huy2k2@gmail.com",
+        "imageDir_small": "Image/small001.jpg",
+        "imageDir_big": "Image/big001.jpg"
+        }  }
+# 1. Read file contents
+with open(filename,encoding='utf-8') as file:
+    data = json.load(file)
+# 2. Update json object
+data.append(entry)
+# 3. Write json file
+with open(filename,encoding='utf-8') as file:
+    json.dump(data, file)
